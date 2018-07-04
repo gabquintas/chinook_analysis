@@ -1,0 +1,102 @@
+Slide1 - Revenue per country
+
+SELECT c.Country as country,
+            COUNT(i.InvoiceId) as invoices,
+            SUM(i.Total) as revenue,
+            SUM(i.Total)/COUNT(i.InvoiceId) as avg_ticket
+FROM Invoice i
+JOIN Customer c
+ON i.CustomerId = c.CustomerId
+GROUP BY BillingCountry
+ORDER BY COUNT(*) DESC, revenue DESC
+
+Slide2 - Sales per Artist
+
+SELECT a.Name as artist,
+            g.Name as genre,
+            COUNT(i.InvoiceId) as sales
+FROM Invoice i
+JOIN InvoiceLine il
+ON i.InvoiceId = il.InvoiceId
+JOIN Track t
+ON il.TrackId = t.TrackId
+JOIN Genre g
+ON t.GenreId = g.GenreId
+JOIN Album ai
+ON t.AlbumId = ai.AlbumId
+JOIN Artist a
+ON ai.ArtistId = a.ArtistId
+GROUP BY artist
+ORDER BY sales DESC
+
+Slide2 - Sales per Genre
+
+SELECT genre,
+            SUM(sales) as sales
+FROM(
+                SELECT a.Name as artist,
+                            g.Name as genre,
+                            COUNT(i.InvoiceId) as sales
+                FROM Invoice i
+                INNER JOIN InvoiceLine il
+                ON i.InvoiceId = il.InvoiceId
+                INNER JOIN Track t
+                ON il.TrackId = t.TrackId
+                INNER JOIN Genre g
+                ON t.GenreId = g.GenreId
+                INNER JOIN Album ai
+                ON t.AlbumId = ai.AlbumId
+                INNER JOIN Artist a
+                ON ai.ArtistId = a.ArtistId
+                GROUP BY artist
+                ORDER BY sales DESC) as t_table
+GROUP BY genre
+ORDER BY sales DESC"""
+
+Slide3 - Unique genre and artists per customer
+
+SELECT c.FirstName || ' ' || c.LastName as customer_name,
+            COUNT(DISTINCT(t.GenreId)) as different_genres,
+            COUNT(DISTINCT(a.ArtistId)) as different_artists,
+FROM Customer c
+INNER JOIN Invoice i
+ON c.CustomerId = i.CustomerId
+INNER JOIN InvoiceLine il
+ON i.InvoiceId = il.InvoiceId
+INNER JOIN Track t
+ON il.TrackId = t.TrackId
+INNER JOIN Genre g
+ON t.GenreId = g.GenreId
+INNER JOIN Album ai
+ON t.AlbumId = ai.AlbumId
+INNER JOIN Artist a
+ON ai.ArtistId = a.ArtistId
+WHERE genre != 'TV Shows'
+GROUP BY customer_name
+
+Slide4 - Monthly Sales per Sales Rep
+
+SELECT STRFTIME('%Y-%m', i.InvoiceDate) as date,
+            e.FirstName || ' ' || e.LastName as employee_name,
+            SUM(i.Total) as revenue
+FROM Invoice i
+JOIN Customer c
+ON c.CustomerId = i.CustomerId
+JOIN Employee e
+ON c.SupportRepId = e.EmployeeId
+WHERE date >= '2012-12'
+GROUP BY date, employee_name
+ORDER BY date
+
+Slide4 - Total last 12 months sales per sales rep
+
+SELECT  e.FirstName || ' ' || e.LastName as employee_name,
+            SUM(i.Total) as revenue
+FROM Invoice i
+JOIN Customer c
+ON c.CustomerId = i.CustomerId
+JOIN Employee e
+ON c.SupportRepId = e.EmployeeId
+WHERE STRFTIME('%Y-%m', i.InvoiceDate) >= '2012-12'
+GROUP BY employee_name
+ORDER BY revenue DESC
